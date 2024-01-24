@@ -1,23 +1,31 @@
 import pandas as pd
 
 class TripDates:
-    def __init__(self, df_tc: pd.DataFrame):
-        self.__df_tc = df_tc.copy()
+    def __init__(self, df_tc: pd.DataFrame) -> None:
+        self.df_tc = df_tc.copy()
     
-    def update_db(self, df_tc: pd.DataFrame) -> None:
+    @property
+    def table(self) -> pd.DataFrame:
         """
-        Update database content
+        Get the table with the departure 
+        and arrival dates of the trips made
         """
-        self.__df_tc = df_tc.copy()
+        return self.df_tc.loc[:, ['FECHA DE INICIO', 'FECHA DE LLEGADA']].copy()
     
-    def choose_dtypes(self, dtype_fi: object, dtype_fl: object) -> pd.DataFrame:
+    @table.setter
+    def table(self, df_tc: pd.DataFrame) -> None:
         """
-        Filter the data according by the dtypes 
-        selected for the columns FECHA DE INICIO and 
-        FECHA DE LLEGADA
+        Update the content
         """
-        dtypes_selected = self.__df_tc.apply(
-        lambda x: type(x['FECHA DE INICIO']) == dtype_fi
-        and type(x['FECHA DE LLEGADA']) == dtype_fl, axis = 1
+        self.df_tc = df_tc
+    
+    def choose_dtypes(self, dtype_dd: type, dtype_ad: type) -> pd.DataFrame:
+        """
+        Filter the dates according by 
+        the dtypes selected
+        """
+        dtypes_selected = self.table.apply(
+        lambda x: type(x['FECHA DE INICIO']) == dtype_dd
+        and type(x['FECHA DE LLEGADA']) == dtype_ad, axis = 1
         )
-        return self.__df_tc.loc[dtypes_selected, :]
+        return self.table.loc[dtypes_selected, :]
