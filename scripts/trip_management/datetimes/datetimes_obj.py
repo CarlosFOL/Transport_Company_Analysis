@@ -4,35 +4,46 @@ from ..trip_dates import TripDates
 from .trip_duration import TripDuration
 
 class DatetimesObj(TripDates):
-    def __init__(self, df_tc: pd.DataFrame):
-        super().__init__(df_tc)
-        self.__df_tc = super().choose_dtypes(dtype_fi=datetime,
-                                        dtype_fl=datetime)
+        
+    @property
+    def dt_table(self) -> pd.DataFrame:
+        """
+        Get the table with departure and arrival 
+        dates whose dtype is datetime
+        """
+        table = pd.merge(
+            left=self.choose_dtypes(dtype_dd=datetime, dtype_ad=datetime),
+            right = self.df_tc.loc[:, ['FECHA', 'FECHA TRANSFERENCIA',
+                                       'HORA DE INICIO DEL TRANSITO', 'DESTINO',
+                                       'HORA DE LLEGADA DESTINO', 'ORIGEN']],
+            left_index= True,
+            right_index = True
+            ) 
+        return table
     
-    def update_db(self, df_tc: pd.DataFrame) -> None:
+    @dt_table.setter
+    def dt_table(self, df_tc: pd.DataFrame) -> None:
         """
-        Update database content
+        Update the content
         """
-        super().update_db(df_tc)
-        self.__df_tc = super().choose_dtypes(dtype_fi=datetime,
-                                        dtype_fl=datetime)
+        self.table = df_tc
     
     def filter_by_relationship(self, consistent = True) -> pd.DataFrame:
         """
         Filter the observations by checking 
-        whether the relationship between the 
-        Start Date and Arrival Date is consistent or not
+        whether departure date < arrival date
         """
-        consistent_cond = self.__df_tc.apply(
+        consistent_cond = self.dt_table.apply(
             lambda x: x['FECHA DE LLEGADA'] >= x['FECHA DE INICIO'],
             axis = 1
         )
         if consistent == True:
-            return self.__df_tc.loc[consistent_cond, :]
+            return self.dt_table.loc[consistent_cond, :]
         else:
-            return self.__df_tc.loc[~consistent_cond, :]
+            return self.dt_table.loc[~consistent_cond, :]
     
-    def get_trip_duration(self) -> pd.DataFrame:
+    @property
+    def trip_duration(self) -> pd.DataFrame:
         """
         Get the table with the average 
         trip duration of all the routes
@@ -47,24 +58,23 @@ class DatetimesObj(TripDates):
         """
         routes = df_trips.apply(lambda x: f"{x['ORIGEN']} - {x['DESTINO']}", axis = 1)
         routes.name = 'Routes'
-        df_trip_duration = self.get_trip_duration()
-        trip_duration = pd.merge(
-            left = df_trip_duration, right = routes, 
+        trip_durations = pd.merge(
+            left = self.trip_duration, right = routes, 
             left_index = True, right_on='Routes'
             )     
-        return trip_duration.iloc[:, [1, 0]]
+        return trip_durations.iloc[:, [1, 0]]
     
-    def get_correct_arr_date(self, df_trips: pd.DataFrame):
+    def get_correct_arr_date(self, df_trips: pd.DataFrame) -> pd.Series:
         """
         Get the correct arrival dates by adding 
-        the start dates and the trip durations
+        the departure dates with the trip durations
         """
-        routes_duration = self.find_trip_duration(df_trips)
+        routes_duration = self.find_trip_duration(df_trips).loc['Trip_Duration']
         arrival_dates = (
             pd.to_datetime(
-                self.__df_tc.loc[routes_duration.index, 'FECHA DE INICIO']
+                self.dt_table.loc[routes_duration.index, 'FECHA DE INICIO']
                 ) + pd.to_timedelta(
-                routes_duration['Trip_Duration']
+                routes_duration
                 )
             )
         return arrival_dates

@@ -29,7 +29,10 @@ class TripDuration:
         Calculate the trip duration of all 
         the routes traveled
         """
-        not_unrgt = ~(self.df_tc.iloc[:, [24, 26]].isin(['Unregistered']).any(axis = 1))
+        not_unrgt = ~(self.df_tc.loc[:, ['HORA DE INICIO DEL TRANSITO', 
+                                          'HORA DE LLEGADA DESTINO']].isin(
+                                              ['Unregistered']
+                                            ).any(axis = 1))
         df_td = self.df_tc[not_unrgt].copy()
         df_td['Start_Transit_Time'] = self.process_times(df_td['HORA DE INICIO DEL TRANSITO'])
         df_td['Arrival_Time'] = self.process_times(df_td['HORA DE LLEGADA DESTINO'])
