@@ -4,7 +4,7 @@ from ..trip_dates import TripDates
 from .trip_duration import TripDuration
 
 class DatetimesObj(TripDates):
-        
+    
     @property
     def dt_table(self) -> pd.DataFrame:
         """
@@ -18,7 +18,7 @@ class DatetimesObj(TripDates):
                                        'HORA DE LLEGADA DESTINO', 'ORIGEN']],
             left_index= True,
             right_index = True
-            ) 
+            )
         return table
     
     @dt_table.setter
@@ -69,7 +69,7 @@ class DatetimesObj(TripDates):
         Get the correct arrival dates by adding 
         the departure dates with the trip durations
         """
-        routes_duration = self.find_trip_duration(df_trips).loc['Trip_Duration']
+        routes_duration = self.find_trip_duration(df_trips)['Trip_Duration']
         arrival_dates = (
             pd.to_datetime(
                 self.dt_table.loc[routes_duration.index, 'FECHA DE INICIO']

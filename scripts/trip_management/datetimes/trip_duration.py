@@ -16,7 +16,7 @@ class TripDuration:
             )
         return datetimes
     
-    def process_times(self, time_column: pd.DataFrame) -> pd.Series:
+    def process_times(self, time_column: pd.Series) -> pd.Series:
         """
         Convert in time objects to combine 
         with the dates
