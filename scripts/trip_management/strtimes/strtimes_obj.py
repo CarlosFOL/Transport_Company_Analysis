@@ -1,7 +1,5 @@
-import os
-os.chdir('/home/carlosfol/My_Documents/Git_Projects/PSI_TRIPS/scripts/trip_management')
 import pandas as pd
-from trip_dates import TripDates
+from ..trip_dates import TripDates
 
 class StrTimes(TripDates):
     
@@ -10,13 +8,20 @@ class StrTimes(TripDates):
         """
         Table containing the departure and 
         arrival dates of all trips with a str 
-        date in any of these columns.
+        value in any of these columns.
         """
         df_dtypes = self.table.map(type)
         str_dates = df_dtypes.isin([str]).sum(axis=1).map(bool)
         return df_dtypes[str_dates]
     
-    def pairs_grouping(self) -> pd.DataFrame:
+    @str_table.setter
+    def str_table(self, df_tc: pd.DataFrame) -> None:
+        """
+        Update the content
+        """
+        self.table = df_tc
+    
+    def __pairs_grouping(self) -> pd.DataFrame:
         """
         Get the pairs where at least 
         one is a str object. Then, group the 
@@ -38,7 +43,7 @@ class StrTimes(TripDates):
         the columns of start and arrival date to check 
         whether they are in both.
         """ 
-        df_strdates = self.pairs_grouping() 
+        df_strdates = self.__pairs_grouping() 
         df_strdates = df_strdates.melt(id_vars = ['Pair'], 
                                        value_name='Dtype', var_name='Date')
         df_strdates.Dtype = df_strdates.Dtype.map(str)
@@ -47,9 +52,3 @@ class StrTimes(TripDates):
             ).agg({'Pair': 'count'})
         df_strdates.rename(columns={'Pair': 'freq'}, inplace=True) 
         return df_strdates
-
-if __name__ == '__main__':
-    path = '/home/carlosfol/My_Documents/Git_Projects/PSI_TRIPS/df_tc.h5'
-    df_tc = pd.read_hdf(path, key = 'tc')
-    df_tc = StrTimes(df_tc).presence_in_db()
-    print(df_tc)
