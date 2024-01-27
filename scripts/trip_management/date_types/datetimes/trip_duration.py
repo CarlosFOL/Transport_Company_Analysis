@@ -5,7 +5,7 @@ class TripDuration:
     def __init__(self, df_tc: pd.DataFrame):
         self.df_tc = df_tc
     
-    def merge_date_and_time(self, df_tc: pd.DataFrame, date_col: str, time_col: str) -> pd.Series:
+    def __merge_date_and_time(self, df_tc: pd.DataFrame, date_col: str, time_col: str) -> pd.Series:
         """
         Combine the date objetcs with 
         the times objects
@@ -16,7 +16,7 @@ class TripDuration:
             )
         return datetimes
     
-    def process_times(self, time_column: pd.Series) -> pd.Series:
+    def __process_times(self, time_column: pd.Series) -> pd.Series:
         """
         Convert in time objects to combine 
         with the dates
@@ -34,10 +34,10 @@ class TripDuration:
                                               ['Unregistered']
                                             ).any(axis = 1))
         df_td = self.df_tc[not_unrgt].copy()
-        df_td['Start_Transit_Time'] = self.process_times(df_td['HORA DE INICIO DEL TRANSITO'])
-        df_td['Arrival_Time'] = self.process_times(df_td['HORA DE LLEGADA DESTINO'])
-        df_td['Start_Date'] = self.merge_date_and_time(df_td, 'FECHA DE INICIO', 'Start_Transit_Time')
-        df_td['Arrival_Date'] = self.merge_date_and_time(df_td, 'FECHA DE LLEGADA', 'Arrival_Time')
+        df_td['Start_Transit_Time'] = self.__process_times(df_td['HORA DE INICIO DEL TRANSITO'])
+        df_td['Arrival_Time'] = self.__process_times(df_td['HORA DE LLEGADA DESTINO'])
+        df_td['Start_Date'] = self.__merge_date_and_time(df_td, 'FECHA DE INICIO', 'Start_Transit_Time')
+        df_td['Arrival_Date'] = self.__merge_date_and_time(df_td, 'FECHA DE LLEGADA', 'Arrival_Time')
         df_td['Route'] = df_td.apply(
             lambda x: f"{x['ORIGEN']} - {x['DESTINO']}",
             axis = 1

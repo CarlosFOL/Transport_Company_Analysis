@@ -1,9 +1,9 @@
 from datetime import datetime
 import pandas as pd
-from ..trip_dates import TripDates
+from ..dtypes import DateTypes
 from .trip_duration import TripDuration
 
-class DatetimesObj(TripDates):
+class DatetimesObj(DateTypes):
     
     @property
     def dt_table(self) -> pd.DataFrame:
@@ -12,7 +12,7 @@ class DatetimesObj(TripDates):
         dates whose dtype is datetime
         """
         table = pd.merge(
-            left=self.choose_dtypes(dtype_dd=datetime, dtype_ad=datetime),
+            left=self.customized_dtypes(dtype_dd=datetime, dtype_ad=datetime),
             right = self.df_tc.loc[:, ['FECHA', 'FECHA TRANSFERENCIA',
                                        'HORA DE INICIO DEL TRANSITO', 'DESTINO',
                                        'HORA DE LLEGADA DESTINO', 'ORIGEN']],
