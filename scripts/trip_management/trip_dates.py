@@ -18,14 +18,3 @@ class TripDates:
         Update the content
         """
         self.df_tc = df_tc
-    
-    def choose_dtypes(self, dtype_dd: type, dtype_ad: type) -> pd.DataFrame:
-        """
-        Filter the dates according by 
-        the dtypes selected
-        """
-        dtypes_selected = self.table.apply(
-        lambda x: type(x['FECHA DE INICIO']) == dtype_dd
-        and type(x['FECHA DE LLEGADA']) == dtype_ad, axis = 1
-        )
-        return self.table.loc[dtypes_selected, :]
