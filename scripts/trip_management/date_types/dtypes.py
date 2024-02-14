@@ -1,5 +1,6 @@
-from ..trip_dates import TripDates
+import matplotlib.pyplot as plt
 import pandas as pd
+from ..trip_dates import TripDates
 
 class DateTypes(TripDates):
     
@@ -47,11 +48,11 @@ class SingleDtype(TripDates):
         df_dates.rename(columns={'Group': 'Pair'}, inplace = True)
         return df_dates
 
-    def presence_in_db(self) -> pd.DataFrame:
+    @property
+    def table_pairs(self) -> pd.DataFrame:
         """
-        See the presence of these objects along 
-        the columns of start and arrival date to check 
-        whether they are in both.
+        Table with the frequencies 
+        of the different pairs found.  
         """ 
         df_dates = self.__pairs_grouping() 
         df_dates = df_dates.melt(id_vars = ['Pair'], 
@@ -62,3 +63,21 @@ class SingleDtype(TripDates):
             ).agg({'Pair': 'count'})
         df_dates.rename(columns={'Pair': 'freq'}, inplace=True) 
         return df_dates
+    
+    def presence_in_db(self) -> None:
+        """
+        Plot the frequencies in the 
+        table pairs
+        """
+        pairs = ['Pair %d' %i 
+                 for i in self.table_pairs.index.get_level_values(0).unique()]
+        fig = plt.figure(figsize=(2, 3))
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.pie(
+            x = self.table_pairs.freq.unique(), 
+            autopct = '(%.1f%%)', 
+            labels = pairs,
+            )
+        ax.set_title(f'Pairs containing a\n{self.dtype} date', 
+                     fontdict={'weight': 'bold'})
+        plt.show()

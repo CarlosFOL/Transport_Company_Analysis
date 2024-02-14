@@ -1,9 +1,11 @@
 from datetime import datetime, time
+from .datetimes_obj import DatetimesObj
 import pandas as pd
 
-class TripDuration:
+class TripDuration(DatetimesObj):
     def __init__(self, df_tc: pd.DataFrame):
-        self.df_tc = df_tc
+        super().__init__(df_tc)
+        self.df_tc = self.filter_by_relationship()
     
     def __merge_date_and_time(self, df_tc: pd.DataFrame, date_col: str, time_col: str) -> pd.Series:
         """
@@ -24,10 +26,11 @@ class TripDuration:
         cast_time = lambda x: time(int(x[:2]), int(x[3:5]))
         return time_column.astype(str).apply(cast_time)
     
-    def calculate_trip_times(self) -> pd.DataFrame:
+    @property
+    def table_trip_durations(self) -> pd.DataFrame:
         """
-        Calculate the trip duration of all 
-        the routes traveled
+        Table with the trip duration 
+        of all the routes traveled
         """
         not_unrgt = ~(self.df_tc.loc[:, ['HORA DE INICIO DEL TRANSITO', 
                                           'HORA DE LLEGADA DESTINO']].isin(
@@ -47,3 +50,29 @@ class TripDuration:
             axis = 1
         )
         return df_td.groupby(by = 'Route').agg({'Trip_Duration': 'mean'})
+    
+    def __find_trip_duration(self, df_trips: pd.DataFrame) -> pd.DataFrame:
+        """
+        Find the trip duration of 
+        specific routes
+        """
+        routes = df_trips.apply(lambda x: f"{x['ORIGEN']} - {x['DESTINO']}", axis = 1)
+        routes.name = 'Routes'
+        trip_durations = pd.merge(
+            left = self.table_trip_durations, right = routes, 
+            left_index = True, right_on='Routes'
+            )     
+        return trip_durations.iloc[:, [1, 0]]
+    
+    def get_correct_arr_date(self, df_trips: pd.DataFrame) -> pd.Series:
+        """
+        Get the correct arrival dates by adding 
+        the departure dates with the trip durations
+        """
+        routes_duration = self.__find_trip_duration(df_trips)['Trip_Duration']
+        arrival_dates = (
+            pd.to_datetime(df_trips['FECHA DE INICIO']) +
+            pd.to_timedelta(df_trips['HORA DE INICIO DEL TRANSITO'].astype(str)) +
+            pd.to_timedelta(routes_duration)
+            )
+        return arrival_dates
