@@ -2,8 +2,15 @@ import pandas as pd
 
 class Budget:
     """
-    Amount of money that a driver receives 
-    for his trip expenses
+    Amount of money that a driver receives for his trip expenses
+    
+    Attributes
+    ----------
+    transf_date: bool
+        It takes a true value if it only wants to take into account 
+        the trips that don't have a transfer date registered.
+    df_tc: pd.DataFrame
+        Original dataframe of all the trips.
     """
     
     
@@ -18,16 +25,14 @@ class Budget:
     def transf_date(self) -> bool:
         """
         It indicates whether to return the 
-        trips with a valid transfer date.
+        trips with a registered transfer date .
         """
         return self._transf_date
-    
     
     @property
     def table_tc(self) -> pd.DataFrame:
         """
-        The table that records the main attributes of the 
-        trips made by the Anonymous Transport Company.
+        The table that records all the trips.
         """
         return self._df_tc
     
@@ -39,14 +44,13 @@ class Budget:
         """
         self._df_tc = df_tc_up
         
-
     @property
     def budget_table(self) -> pd.DataFrame:
         """
         It contains the budget data of these trips 
         that meet the transfer date condition.
         """
-        cols = ['FECHA TRANSFERENCIA', 'ORIGEN', 'DESTINO', 
+        cols = ['FECHA TRANSFERENCIA', 'STATUS', 'ORIGEN', 'DESTINO', 
                 'FAMILIA', 'NUEVO / SEMINUEVO', 'POR RENDIR S/']
         cond = self.table_tc['FECHA TRANSFERENCIA'] == 'Unregistered'
         if self.transf_date:
