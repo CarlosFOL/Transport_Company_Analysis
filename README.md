@@ -1,3 +1,3 @@
-# Transport Company Analysis
+# Transportation Company Analysis
 
 In this project, the main objective is to understand the main variables that a transport company takes into account when they register the data related to the trips that they have made. Also to find out interesting information about which are the periods when the demand increases or decreases, which are the most frequent routes, which are the most used vehicles according to the service and other information that will be developed as we move forward in the exploratory analysis. And to make this process successful, it starts with a large data cleaning process that allows us to preserve the variables that will be useful for our analysis, as well as the design of an application that can generate a statistic by choosing different metrics to measure.
