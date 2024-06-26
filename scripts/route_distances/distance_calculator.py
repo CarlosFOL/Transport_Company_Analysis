@@ -1,6 +1,7 @@
 import googlemaps
-import pandas as pd
 from group_manager import GroupManager, Point
+from math import ceil, floor
+import pandas as pd
 from time import sleep
 
 class DistanceCalculator:
@@ -21,13 +22,25 @@ class DistanceCalculator:
     
     def __init__(self, route_table: pd.DataFrame, token = str):
         self.route_table = route_table
-        self.token = token
+        self.client = googlemaps.Client(token)
         self.group_manager = GroupManager()
+    
+    def build_dist_table(self) -> pd.DataFrame:
+        """
+        It builds the distance table from the group of points created by the 
+        GroupManager.
+        """
+        partition = [] 
+        groups = self._create_groups()
+        for g in groups:
+            subset = self._design_subset(origins=g["ORIGEN"], destinations=g["DESTINO"])
+            partition.append(subset)
+        return pd.concat(partition)
     
     def _create_groups(self) -> list:
         """
-        It creates the two groups of origin and destination points that serve as
-        inputs for the Google API. 
+        It creates the different groups of origin and destination points that 
+        serve as inputs for the Google API. 
         
         Return
         ------
@@ -37,11 +50,11 @@ class DistanceCalculator:
         # The manager starts with 0 groups. Therefore, we have to add the first one.
         self.group_manager.add_group() 
         # Go through each record of the route table
-        ptypes = ['ORIGEN', 'DESTINO']
+        ptypes = ['ORIGEN', 'DESTINO'] # Types of point
         for idx in range(self.route_table.shape[0]):
             origin, destination = [Point(name, ptype) 
                                    for name, ptype in zip(self.route_table.loc[idx, ptypes], ptypes)]
-            # The second condition is to avoid stange cases.
+            # The second condition is to avoid strange cases.
             if self.group_manager.is_new(origin) and (origin.name != destination.name):
                 # In which group can the new point be inserted?
                 group = self.group_manager.which_group(origin)
@@ -65,44 +78,74 @@ class DistanceCalculator:
                         break
                     elif not g.does_it_belong(destination) and g.can_be_inserted(destination):
                         g.add_point(destination)
-                        destination.has_group = True
                         break
-                # If the destination point cannot be added to any group:
+                # If the destination point coult not be added to any group:
                 if not destination.has_group:
                     self.group_manager.add_group(origin, destination)  
         return self.group_manager.show_groups()                       
     
-    def build_dist_table(self):
+    def _design_subset(self, origins: list, destinations: list) -> pd.DataFrame:
         """
-        It builds the distance table from the group of points created by the 
-        GroupManager.
+        It gets the distance of a subset of a certain group of origin and destinations 
+        points. And for this task, it calculates how many origin points can be sent
+        in the request to avoid raising an error for exceeding the maximum number of
+        elements.
+        
+        Parameters
+        ----------
+        origins: list
+            Origin points of the routes
+        destinations: list
+            Destination points of the routes
+        
+        Return
+        ------
+        pd.DataFrame
+            A partition
         """
-        client = googlemaps.Client(key = self.token)
-        groups = self._create_groups()
-        for g in groups:
-            distances = 0
+        subset = []
+        MAX_ELEMENTS = 25
+        if len(destinations) <= MAX_ELEMENTS:
+            # The number of origin points that we can choose:
+            or_pts = floor(MAX_ELEMENTS / len(destinations))
+            if or_pts >= len(origins):
+                subset = self._send_request(origins, destinations)
+            else:
+                for i in range( ceil(len(origins) / or_pts) ):
+                    block = self._send_request(origins[i*or_pts: (i*or_pts) + or_pts], destinations)
+                    subset +=  block       
+        else:
+            dest_pts = ceil(len(destinations) / MAX_ELEMENTS)
+            for o in origins:
+                for j in range(dest_pts):
+                    block = self._send_request(o, destinations[j*dest_pts: (j*dest_pts) + dest_pts])
+                    subset += block
+        return pd.DataFrame(subset, columns = ["ORIGIN", "DESTINATION", "KM"])
         
-        
+
+    def _send_request(self, origins: list | str, destinations: list | str) -> list:
+        """
+        It sends the request to the Google API distance matrix, but respecting
+        the maximum number of elements allowed.
+        """
+        partition = []
+        response = self.client.distance_matrix(origins, destinations)['rows']
+        # If only 1 origin point has been sent
+        origins = [origins] if type(origins) == str else origins 
+        for i, o_point in enumerate(origins):
+            for j, d_point in enumerate(destinations):
+                data = response[i]["elements"][j]
+                if data['status'] == "OK":                                     
+                    distance = round(data["distance"]["value"] / 1000, 2)
+                    partition.append((o_point, d_point, distance))
+        return partition
 
 def run():
     route_table = pd.read_csv('budget_table.csv')
     with open('api_key.txt', 'r') as f:
         token = f.read()
-    dist_cal = DistanceCalculator(route_table, token)
-    groups = dist_cal._create_groups()
-    for g in groups:
-        print(g)
-
-
+    dist_cal = DistanceCalculator(route_table, token).build_dist_table()
+    print(dist_cal)
 
 if __name__ == '__main__':
     run()
-    # client = googlemaps.Client(key = 'AIzaSyAJjt79ls7XqGM_Cx4MpAMcpQLjptkdmrk')
-    # origin = ['New York, USA', 'Boston, USA']
-    # destination = ['Orlando, Florida, USA', 'Miami, USA']
-    # response = client.distance_matrix(origin, destination)
-    # with open('response.txt', 'w', encoding='utf-8') as f:
-    #     f.write(f'{response}')
-
-
-

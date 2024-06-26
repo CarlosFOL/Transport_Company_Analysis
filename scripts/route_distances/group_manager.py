@@ -63,6 +63,7 @@ class TripGroup:
         Add the point in the list corresponding to its ptype.
         """
         self.group_points[point.ptype].append(point.name)
+        point.has_group = True
         
 
 
