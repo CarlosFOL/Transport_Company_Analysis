@@ -1,8 +1,10 @@
 import googlemaps
 from group_manager import GroupManager, Point
 from math import ceil, floor
+import os
 import pandas as pd
-from time import sleep
+
+
 
 class DistanceCalculator:
     """
@@ -20,11 +22,13 @@ class DistanceCalculator:
         appropiate group.
     """
     
+
     def __init__(self, route_table: pd.DataFrame, token = str):
         self.route_table = route_table
         self.client = googlemaps.Client(token)
         self.group_manager = GroupManager()
     
+
     def build_dist_table(self) -> pd.DataFrame:
         """
         It builds the distance table from the group of points created by the 
@@ -35,8 +39,16 @@ class DistanceCalculator:
         for g in groups:
             subset = self._design_subset(origins=g["ORIGEN"], destinations=g["DESTINO"])
             partition.append(subset)
-        return pd.concat(partition)
+        # We only have get the records that have a registered budget.
+        dist_table = pd.merge(
+            left = self.route_table,
+            right = pd.concat(partition),
+            on = ["ORIGEN", "DESTINO"],
+            how="left"
+        ).to_csv("../../data/budget_table.csv")
+        return dist_table
     
+
     def _create_groups(self) -> list:
         """
         It creates the different groups of origin and destination points that 
@@ -84,6 +96,7 @@ class DistanceCalculator:
                     self.group_manager.add_group(origin, destination)  
         return self.group_manager.show_groups()                       
     
+
     def _design_subset(self, origins: list, destinations: list) -> pd.DataFrame:
         """
         It gets the distance of a subset of a certain group of origin and destinations 
@@ -120,7 +133,7 @@ class DistanceCalculator:
                 for j in range(dest_pts):
                     block = self._send_request(o, destinations[j*dest_pts: (j*dest_pts) + dest_pts])
                     subset += block
-        return pd.DataFrame(subset, columns = ["ORIGIN", "DESTINATION", "KM"])
+        return pd.DataFrame(subset, columns = ["ORIGEN", "DESTINO", "KM"])
         
 
     def _send_request(self, origins: list | str, destinations: list | str) -> list:
@@ -138,14 +151,16 @@ class DistanceCalculator:
                 if data['status'] == "OK":                                     
                     distance = round(data["distance"]["value"] / 1000, 2)
                     partition.append((o_point, d_point, distance))
-        return partition
+        return partition.iloc[:, 2:]
+
+
 
 def run():
-    route_table = pd.read_csv('budget_table.csv')
-    with open('api_key.txt', 'r') as f:
-        token = f.read()
-    dist_cal = DistanceCalculator(route_table, token).build_dist_table()
-    print(dist_cal)
+    route_table = pd.read_csv('budgets.csv')
+    token = os.getenv("GCP_DIST_MATRIX")
+    DistanceCalculator(route_table, token).build_dist_table()
+
+
 
 if __name__ == '__main__':
     run()
