@@ -36,5 +36,5 @@ extra_costs = ['COMBUSTIBLE', 'CINTA REFLECTIVA', 'PARACHOQUE',
 
     3.2. There are trips whose `STATUS = EN DESTINO` (At Destination). However, there are nulls values in both `HORA LLEGADA CONDUCTOR` and `HORA DE INICIO DEL TRANSITO`<br> <p align = "center"><img src = "img/trip_status.png" width = 340 height = 200></p>
 
-    > [!NOTE]
-    > More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
+> [!NOTE]
+> More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
