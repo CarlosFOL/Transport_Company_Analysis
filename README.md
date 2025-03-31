@@ -6,7 +6,9 @@
 <img src="https://img.shields.io/github/repo-size/CarlosFOL/Transport_Company_Analysis?style=plastic">
 </p>
 
-<img src = "https://tso-assets-prd.s3.amazonaws.com/_processed_/2/4/csm_Landingpage_Hersteller_a58de32001.jpg" width = 450 height = 150>
+<p align="center">
+<img src = "https://tso-assets-prd.s3.amazonaws.com/_processed_/2/4/csm_Landingpage_Hersteller_a58de32001.jpg" width = 650 height = 150>
+</p>
 
 The main goal of this analysis is to identify the key variables this **"anonymous"** transport company records about their daily trips. This project primarily focuses on cleaning a chaotic dataset containing null values, redundant information, unconstrained domains, and non-atomic values.
 
@@ -36,7 +38,7 @@ extra_costs = ['COMBUSTIBLE', 'CINTA REFLECTIVA', 'PARACHOQUE',
 
     3.2. There are trips whose `STATUS = EN DESTINO` (At Destination). However, there are nulls values in both `HORA LLEGADA CONDUCTOR` and `HORA DE INICIO DEL TRANSITO`<br> <p align = "center"><img src = "img/trip_status.png" width = 340 height = 200></p>
     I decided to fill the columns of `HORA LLEGADA CONDUCTOR`, `HORA DE INICIO DEL TRANSITO` with `'Unregistered'` for those trips are `FALSO FLETE` and `CANCELADO`. At this moment, I could know in which trips I could not get their waiting hours.<br>
-    > [!NOTE] More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
+> [!NOTE] More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
 
 4. `FECHA DE TRANSFERENCIA` (Transfer Date). This was a variable that the company didn't handle properly. While drivers could receive multiple transfers during a single trip, the company's system only recorded the first transfer received on the trip's start date.<br> This column has a lot of null data, but we can get it by using the data of another columns (`FECHA DE INICIO`). However, his raises two important questions: First, how should we handle cases where even the start date is unavailable? Second, even after imputation, can we be confident in the format integrity and validity of this derived dat
    
@@ -99,9 +101,9 @@ For the second pair, we got inconsistent values instead of dates in string forma
       <th rowspan="2" style="text-align: center; vertical-align: bottom;">freq</th>
     </tr>
     <tr>
-      <th style="text-align: center;">Dataset</th>
-      <th style="text-align: center;">Column Name</th>
-      <th style="text-align: center;">Data Type</th>
+      <th style="text-align: center;">Pair</th>
+      <th style="text-align: center;">Column</th>
+      <th style="text-align: center;">DType</th>
     </tr>
   </thead>
   <tbody>
@@ -150,3 +152,33 @@ At this point, I was able to significantly reduce the null values in the dataset
 When designing a proper database following conceptual and logical schema principles, we would handle this situation differently. 
 
 For example, a well-designed system would enforce data entry constraints requiring employees to ALWAYS register both start and arrival dates, as well as start and arrival times for each trip. In such a system, null values would only be permitted in specific scenarios, such as when a trip needed to be cancelled or rescheduled.<p align = "center"><img src = "img/nulldata_updated.png" width = 500></p>
+
+---
+5. `POR RENDIR` (Budget). This is a discrete variable that represents the amount of money that a driver received for his trip. For consistency, it's only possible to estimate this data if a transfer date was recorded.<br>The most strange was that there are trips that have been done, but in the budget column are registeres hyphen values ('-') for some reason:<p align = "center"><img src = "img/status_bv.png" width = 300></p><br>On the other hand, I have built the "Budget Table" with the help of the records that had a consistent value for this variable. If you are interest about the process, don't dude to visit `scripts/trip_expenses/budget.py` ⛏️.<br> I had to make an analysis to find our if there were differences between the budget that a driver received according to the type (`FAMILY`) and condition (`CONDITION`) of the vehicle used in the trip .<br><img src = "img/budget_analysis.svg" width = 800><br><ul><li>The box plot "BUDGET RECEIVED BY FAMILY" reveals distinct distribution patterns across vehicle types. Trucks (camiones) display a positively skewed distribution with approximately 80% receiving between S/.$[0, 200]$, alongside notable outliers reaching up to 10 times the median value.<br>Buses show an interesting pattern where the median is relatively low (around 50 soles), yet the upper quartile extends beyond 250 soles, indicating significant variability in budget allocation.<br>Vans and automobiles demonstrate similar distribution characteristics to buses, with comparable medians and several high-value outliers. This variability across all vehicle categories could be attributed to the combination of local and regional trip data in the dataset, where regional trips likely command higher budgets.</li><li>
+The box plot "BUDGET RECEIVED BY VEHICLE'S CONDITION" demonstrates a pronounced difference in budget distribution patterns between new and semi-new vehicles. Semi-new vehicles exhibit substantially greater variability, with a wider interquartile range (approximately 100-500 soles) and a higher median value (around S./$[250, 300]$). This increased dispersion aligns with the practical reality that semi-new vehicles typically require additional investments for maintenance components like bumpers, reflective tape, and other regulatory compliance measures such as technical inspection renewals.<br> Notably, despite this tighter central distribution, new vehicles paradoxically present more extreme outliers, with several data points reaching up to S/.1200 – suggesting exceptional cases where new vehicles demanded substantial budgets.
+</li>
+</ul>
+
+I have to check if the high variability is caused for mixing trips with short (`LOCAL`) and long (`REGIONAL`) distance:
+<p align = "center">
+<img src = "img/budget_local_regional.png" width = 450>
+</p>
+As expected, regional trips consistently receive substantially higher budget allocations than local trips across all vehicle types, confirming the hypothesis that longer trips necessitate additional funding for fuel, accommodation, and other travel-related expenses. 
+
+Trucks and buses exhibit the highest median regional budgets (approximately S/.$[350, 400]$ soles and S/.$300$ respectively) with considerable interquartile ranges, suggesting significant variability even within regional categories. 
+
+The presence of extreme outliers, particularly in the regional truck and bus categories (reaching up to 1300 soles), indicates exceptional cases requiring extraordinary funding. Interestingly, a new category called `LOCAL/REGIONAL` appears, where it's predominantly in the truck segment with a moderate budget distribution.
+
+ The minimal overlap between local and regional distributions for trucks, buses, and vans supports the differentiated budgeting approach based on trip scope. However, the presence of high outliers in local trips and low outliers in regional trips confirms the user's observation that some local trips receive comparable funding to regional ones.
+
+
+
+ ##   <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f30e/512.gif" alt="🌎" width="32" height="32"> Distance Table  
+
+ Finally, I created a table with the distances between the various routes registered in the database. But there was a problem about how the `ORIGIN` and `DESTINATION` were saved, because there are some missing a character, others unnecessary extra characters, words together when they are separated.
+
+ So I thought it would be a good idea to represent these strings as embeddings to recognize which words are similar, **syntactically**, to other words using cosine similarity. This way I can keep only the original ones. I used the all-MiniLM-L6-v2 model from Hugging Face for this task. You cand find it <a href = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">here</a>.
+
+<p align = "center">
+<img src = "img/budget_table.png" width = 500>
+</p>
