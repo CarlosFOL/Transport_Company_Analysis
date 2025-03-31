@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from ..trip_dates import TripDates
 
+
 class DateTypes(TripDates):
+
     
     def customized_dtypes(self, dtype_dd: type, dtype_ad: type) -> pd.DataFrame:
         """
@@ -15,6 +17,7 @@ class DateTypes(TripDates):
         and type(x['FECHA DE LLEGADA']) == dtype_ad, axis = 1
         )
         return self.table.loc[dtypes_selected, :]
+
 
 class SingleDtype(TripDates):
     def __init__(self, df_tc: pd.DataFrame, dtype: type) -> None:

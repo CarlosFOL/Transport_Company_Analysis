@@ -35,6 +35,15 @@ extra_costs = ['COMBUSTIBLE', 'CINTA REFLECTIVA', 'PARACHOQUE',
     3.1. I was surprised that the company decided to store the status of a trip in the same column where the driver's arrival time or the start of the trip should be stored.
 
     3.2. There are trips whose `STATUS = EN DESTINO` (At Destination). However, there are nulls values in both `HORA LLEGADA CONDUCTOR` and `HORA DE INICIO DEL TRANSITO`<br> <p align = "center"><img src = "img/trip_status.png" width = 340 height = 200></p>
+    I decided to fill the columns of `HORA LLEGADA CONDUCTOR`, `HORA DE INICIO DEL TRANSITO` with `'Unregistered'` for those trips are `FALSO FLETE` and `CANCELADO`. At this moment, I could know in which trips I could not get their waiting hours.<br>
+    > [!NOTE] More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
 
-> [!NOTE]
-> More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
+4. `FECHA DE TRANSFERENCIA` (Transfer Date). This was a variable that the company didn't handle properly. While drivers could receive multiple transfers during a single trip, the company's system only recorded the first transfer received on the trip's start date.<br> This column has a lot of null data, but we can get it by using the data of another columns (`FECHA DE INICIO`). However, his raises two important questions: First, how should we handle cases where even the start date is unavailable? Second, even after imputation, can we be confident in the format integrity and validity of this derived dat
+   
+    4.1. First, we check the dtypes in `FECHA DE INICIO` (Start Date) and `FECHA DE LLEGADA` (Arrival Date). I want to analyze the latter, because it's important to check if the following relationship is met: $$\text{Arrival Date} \geq \text{Start Date}$$<br><div align="center" display="flex">
+    <img src = "img/dtypes_arr_start.png" width = 371>
+    <img src = "img/relation_start_arr.png" width = 300>
+    
+    </div>
+
+    4.2.
