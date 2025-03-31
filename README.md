@@ -43,7 +43,110 @@ extra_costs = ['COMBUSTIBLE', 'CINTA REFLECTIVA', 'PARACHOQUE',
     4.1. First, we check the dtypes in `FECHA DE INICIO` (Start Date) and `FECHA DE LLEGADA` (Arrival Date). I want to analyze the latter, because it's important to check if the following relationship is met: $$\text{Arrival Date} \geq \text{Start Date}$$<br><div align="center" display="flex">
     <img src = "img/dtypes_arr_start.png" width = 371>
     <img src = "img/relation_start_arr.png" width = 300>
-    
     </div>
 
-    4.2.
+    4.2. Analysis revealed that 98% of trips with both valid start and end dates (where the temporal relationship between these dates was logically consistent) also contained transit start times and arrival times in the correct format.<br><p align = "center"><img src = "img/start_arr_format.png" width = 350></p>
+
+    4.3. It was possible to estimate the arrival date for these trips that had a consistent value on the start date variable by using the duration of trips with a similar route. To accomplish this  task, I created a class in `scripts/trip_management/date_types/datetimes/trip_duration.py`.
+
+
+    4.4. I had to deal with start and arrival dates that were strings. The following table shows the different types of pairs that I have found.<table border="1">
+  <thead>
+    <tr>
+      <th colspan="3" style="text-align: center;">Multi-index</th>
+      <th rowspan="2" style="text-align: center; vertical-align: bottom;">freq</th>
+    </tr>
+    <tr>
+      <th style="text-align: center;">Pair</th>
+      <th style="text-align: center;">Column</th>
+      <th style="text-align: center;">DType</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: left;">FECHA DE INICIO</td>
+      <td style="text-align: left;">datetime.datetime</td>
+      <td style="text-align: right;">59</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: left;">FECHA DE LLEGADA</td>
+      <td style="text-align: left;">str</td>
+      <td style="text-align: right;">59</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">2</td>
+      <td style="text-align: left;">FECHA DE INICIO</td>
+      <td style="text-align: left;">str</td>
+      <td style="text-align: right;">115</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">2</td>
+      <td style="text-align: left;">FECHA DE LLEGADA</td>
+      <td style="text-align: left;">str</td>
+      <td style="text-align: right;">115</td>
+    </tr>
+  </tbody>
+</table>
+For the second pair, we got inconsistent values instead of dates in string format:
+<p align = "center"><img src = "img/pair2_mc_values.png" width = 400></p>
+4.5. It was also found dates that were floats. This behavior could be caused by NaN values, because NumPy handles them that way.
+<table border="1">
+  <thead>
+    <tr>
+      <th colspan="3" style="text-align: center;">Multi-index</th>
+      <th rowspan="2" style="text-align: center; vertical-align: bottom;">freq</th>
+    </tr>
+    <tr>
+      <th style="text-align: center;">Dataset</th>
+      <th style="text-align: center;">Column Name</th>
+      <th style="text-align: center;">Data Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: left;">FECHA DE INICIO</td>
+      <td style="text-align: left;">datetime.datetime</td>
+      <td style="text-align: right;">47</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: left;">FECHA DE LLEGADA</td>
+      <td style="text-align: left;">float</td>
+      <td style="text-align: right;">47</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">2</td>
+      <td style="text-align: left;">FECHA DE INICIO</td>
+      <td style="text-align: left;">float</td>
+      <td style="text-align: right;">52</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">2</td>
+      <td style="text-align: left;">FECHA DE LLEGADA</td>
+      <td style="text-align: left;">float</td>
+      <td style="text-align: right;">52</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">3</td>
+      <td style="text-align: left;">FECHA DE INICIO</td>
+      <td style="text-align: left;">float</td>
+      <td style="text-align: right;">1</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">3</td>
+      <td style="text-align: left;">FECHA DE LLEGADA</td>
+      <td style="text-align: left;">datetime.datetime</td>
+      <td style="text-align: right;">1</td>
+    </tr>
+  </tbody>
+</table>
+I could only work with pair 1, where I have to proceed the same way if there are valid start dates, estimating the arrival date by using the duration of trips with similar route.
+
+---
+At this point, I was able to significantly reduce the null values in the dataset. However, simply filling missing values with 'Unregistered' is not the most optimal approach from a data integrity perspective.
+When designing a proper database following conceptual and logical schema principles, we would handle this situation differently. 
+
+For example, a well-designed system would enforce data entry constraints requiring employees to ALWAYS register both start and arrival dates, as well as start and arrival times for each trip. In such a system, null values would only be permitted in specific scenarios, such as when a trip needed to be cancelled or rescheduled.<p align = "center"><img src = "img/nulldata_updated.png" width = 500></p>
