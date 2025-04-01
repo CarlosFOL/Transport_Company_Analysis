@@ -38,7 +38,10 @@ extra_costs = ['COMBUSTIBLE', 'CINTA REFLECTIVA', 'PARACHOQUE',
 
     3.2. There are trips whose `STATUS = EN DESTINO` (At Destination). However, there are nulls values in both `HORA LLEGADA CONDUCTOR` and `HORA DE INICIO DEL TRANSITO`<br> <p align = "center"><img src = "img/trip_status.png" width = 340 height = 200></p>
     I decided to fill the columns of `HORA LLEGADA CONDUCTOR`, `HORA DE INICIO DEL TRANSITO` with `'Unregistered'` for those trips are `FALSO FLETE` and `CANCELADO`. At this moment, I could know in which trips I could not get their waiting hours.<br>
-> [!NOTE] More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
+
+> [!NOTE] 
+> More information about the meaning of the variable `STATUS` in `notebooks/data_cleaning.ipynb`.
+
 
 4. `FECHA DE TRANSFERENCIA` (Transfer Date). This was a variable that the company didn't handle properly. While drivers could receive multiple transfers during a single trip, the company's system only recorded the first transfer received on the trip's start date.<br> This column has a lot of null data, but we can get it by using the data of another columns (`FECHA DE INICIO`). However, his raises two important questions: First, how should we handle cases where even the start date is unavailable? Second, even after imputation, can we be confident in the format integrity and validity of this derived dat
    
@@ -179,6 +182,12 @@ The presence of extreme outliers, particularly in the regional truck and bus cat
 
  So I thought it would be a good idea to represent these strings as embeddings to recognize which words are similar, **syntactically**, to other words using cosine similarity. This way I can keep only the original ones. I used the all-MiniLM-L6-v2 model from Hugging Face for this task. You cand find it <a href = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">here</a>.
 
+
+To calculate the distance between two points was Google Matrix Distance API. Therefore, I had to create a matrix of `ORIGIN` and  `DESTINATION` points. If you are interested about how I worked with API, feel free to visit `scripts/route_distances`
+
+
 <p align = "center">
 <img src = "img/budget_table.png" width = 500>
 </p>
+
+ There is a slight upward tendency indicating that a greater distance is associated with the delivery of a greater budget. However, it cannot be stated that this fact is absolutely true, since there are points that don't respect that statement. Also, there are routes whose distance 0, what makes no sense.
