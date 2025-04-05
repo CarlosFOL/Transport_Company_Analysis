@@ -1,0 +1,127 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage{biblatex}
+\usepackage{classicthesis}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{pdflscape}
+\usepackage{sectsty}
+\usepackage{tocloft}
+
+
+% Bibliography and table of contents
+\addbibresource{biblio.bib}
+
+% Customize sections
+\allsectionsfont{\Large}
+\renewcommand{\cftsecfont}{\bfseries} % Apply bold to sections
+\renewcommand{\cftsecpagefont}{\bfseries} % Apply bold to number pages
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}} % Separate with dots
+
+
+% Title and author
+\title{\normalfont\spacedallcaps{Database design for transportation company}}
+
+\author{\spacedlowsmallcaps{CarlosFOL}} 
+
+\date{}
+
+
+% Body
+\begin{document}
+
+\pagenumbering{gobble}
+
+\maketitle
+
+
+
+\tableofcontents
+
+\vspace{2in}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/logo.png}
+    \label{logo_db}
+\end{figure}
+
+
+\newpage
+
+\pagenumbering{arabic}
+
+\section{Description of the problem}
+
+The transportation company requires a comprehensive database system to record and manage daily trips with an exhaustive level of detail. 
+Each trip is characterized by a unique code that distinguishes it from others, allowing for precise tracking of operations. 
+The system captures the complete temporality of the trip, recording both the start and end dates, which provides a clear 
+temporal framework for each movement. \\
+
+Geographic location plays a fundamental role in the registration. Each point in the system (which can serve as either an origin or destination) 
+is saved with a unique point code, precise coordinates (latitude and longitude), a descriptive name, and a complete address (including street, number, council, postal code, and country). 
+The system precisely documents both the origin and destination points of each route. Each defined route (origin-destination pair) is assigned a unique 
+route identifier in the system, making it possible to reference and track specific routes precisely. Each of these uniquely identified routes has a specific tariff settled in the system 
+and can be classified as local or regional trip. The latter depends on both the origin and destination point being in the same province. \\
+
+Each trip is associated with a specific purpose, which has attributes including a name, description, and a unique code. Purposes are categorized by type, which includes a 
+name and code. The current status of the trip is recorded in detail, allowing real-time tracking of operations. \\
+
+A critical element in the documentation of each trip is the remittance guide. A unique code for this document is registered, which the driver must have as proof of delivery. This mechanism ensures the 
+traceability and accountability of each trip. \\
+
+It is essential for the system to maintain complete traceability of vehicles, drivers, and their association with trips. This is implemented through a control that manages the relationship between trips and vehicles, 
+tracking arrival dates, departure dates, and whether there were late starts. The system must track which driver operates each vehicle within that trip. \\
+
+Regarding vehicles, the system manages comprehensive information. Each unit is identified by a unique chassis number. Complete characteristics are registered such as brand, model, color, and vehicle family. The vehicle's condition is documented, 
+differentiating between new and used units, which allows for more efficient fleet management. \\
+
+The system maintains a comprehensive tracking history of each vehicle's Technical Inspection documentation (Tech\_insp). This includes registering the inspection code, issue date, and expiration date of the certificate, as well as tracking whether the 
+inspection is current. This historical tracking is crucial for maintaining safety and regulatory compliance of the transport fleet. \\
+
+A vehicle can be owned either by the transportation company itself or by a customer. It's important to note that the participation from Vehicle to Customer is partial, as not all vehicles belong to customers—many belong to the transportation company itself. 
+The system clearly identifies this ownership distinction through the "owns" relationship between Customer and Vehicle. \\
+
+Driver management is another fundamental aspect of the system. Each driver is identified by a unique DNI and has attributes including a name, which is broken down into first name (f\_name), surname1 (s\_name1), and surname2 (s\_name2). The system tracks each driver's license details, 
+including the license ID, issue date, expiration date, and type. The system also monitors whether the license is current. \\
+
+The company's pricing model is based on predefined route tariffs. Any other factor that might impact the final service cost is considered an additional expense (Extra\_cost), categorized by type (Type\_cost). \\
+
+The system includes a ternary relationship (Cost\_Attribution) connecting drivers, trips, and extra costs. This three-way relationship is specifically designed to track which additional costs are associated with which specific drivers on which particular trips. 
+This approach enables precise tracking and accountability, ensuring that each expense is correctly attributed to both the responsible driver and the relevant trip. This relationship enables complete financial accountability throughout operations. \\
+
+Customer management is carried out with an equally detailed level. Each customer is registered with a unique identifier (TIN) and corresponding name. The system allows customers to schedule trips, providing 
+complete operational flexibility. \\
+
+The ultimate objective of this database system is to create an integral tool that enables detailed, precise, and comprehensive tracking of every operational and financial aspect of the transport company's trips, 
+including route-specific identification and pricing, facilitating decision-making and process optimization. \\
+
+\newpage
+
+\newgeometry{left=0.5in, bottom=0.2in}
+
+\begin{landscape}
+
+\section{Entity-Relationship model}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=1.03\textwidth]{img/er_model.png}
+    \caption{ER model}
+    \label{er_model}
+\end{figure}
+    
+
+\end{landscape}
+
+
+\newpage
+
+\restoregeometry
+
+\section{Logical schema}
+
+The graphical interface of \href{https://www.supabase.com}{Supabase} was used to generate the following diagram:
+
+
+\end{document}
