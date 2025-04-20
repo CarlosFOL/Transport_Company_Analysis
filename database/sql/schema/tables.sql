@@ -1,34 +1,3 @@
-
-/*TRIPS*/
-
-CREATE TABLE type_purp(
-	cod SERIAL,
-	name VARCHAR(100) NOT NULL,
-)
-
-CREATE TABLE purpose(
-	cod VARCHAR(9),
-	name VARCHAR(100) NOT NULL,
-	descr VARCHAR(255),
-	cod_type NUMERIC NOT NULL,
-
-	CONSTRAINT pk_cod PRIMARY KEY (cod),
-	CONSTRAINT fk_type FOREIGN KEY (cod_type) REFERENCES type_purp(cod)
-)
-
-CREATE TABLE trip(
-	cod VARCHAR(9),
-	rem_guide VARCHAR(10) NOT NULL, /*It has to be inserted manually*/
-	status VARCHAR(14) DEFAULT "PROGRAMMED", /*Default status when a trip is recorded*/
-	start_date TIMESTAMP NOT NULL,
-	end_date TIMESTAMP NOT NULL,
-	cod_purp VARCHAR(9) NOT NULL,
-
-	CONSTRAINT pk_trip PRIMARY KEY (cod),
-	CONSTRAINT fk_purp FOREIGN KEY (cod_purp) REFERENCES purpose(cod_purp)
-)
-
-
 /*-----------------------------------------------------------------------------------------------------------------*/
 /*POINT*/
 /*USE THE NOMATIM OSM API TO GET THE COORDINATES OF A POINT*/
@@ -68,6 +37,40 @@ CREATE TABLE customer(
 )
 
 /*-----------------------------------------------------------------------------------------------------------------*/
+/*TRIPS*/
+
+CREATE TABLE type_purp(
+	cod SERIAL,
+	name VARCHAR(100) NOT NULL,
+)
+
+CREATE TABLE purpose(
+	cod VARCHAR(9),
+	name VARCHAR(100) NOT NULL,
+	descr VARCHAR(255),
+	cod_type NUMERIC NOT NULL,
+
+	CONSTRAINT pk_cod PRIMARY KEY (cod),
+	CONSTRAINT fk_type FOREIGN KEY (cod_type) REFERENCES type_purp(cod)
+)
+
+CREATE TABLE trip(
+	cod VARCHAR(9),
+	rem_guide VARCHAR(10) NOT NULL, /*It has to be inserted manually*/
+	status VARCHAR(14) DEFAULT "PROGRAMMED", /*Default status when a trip is recorded*/
+	start_date TIMESTAMP NOT NULL,
+	end_date TIMESTAMP NOT NULL,
+	cod_purp VARCHAR(9) NOT NULL,
+	cod_route NUMERIC NOT NULL,
+	customer VARCHAR(11) NOT NULL,
+
+	CONSTRAINT pk_trip PRIMARY KEY (cod),
+	CONSTRAINT fk_purp FOREIGN KEY (cod_purp) REFERENCES purpose(cod),
+	CONSTRAINT fk_route FOREIGN KEY (cod_route) REFERENCES route(cod),
+	CONSTRAINT fk_cust FOREIGN KEY (customer) REFERENCES customer(tin)
+)
+
+/*-----------------------------------------------------------------------------------------------------------------*/
 /*VEHICLE*/
 CREATE TABLE vehicle(
 	chassis VARCHAR(17),
@@ -97,7 +100,7 @@ CREATE TABLE tech_insp(
 /*-----------------------------------------------------------------------------------------------------------------*/
 /*DRIVER*/
 CREATE TABLE driver(
-	dni VARCHAR(9) NOT NULL,
+	id VARCHAR(9) NOT NULL,
 	first_name VARCHAR(20) NOT NULL,
 	surname1 VARCHAR(20) NOT NULL,
 	surname2 VARCHAR(20) NOT NULL,
@@ -111,23 +114,24 @@ CREATE TABLE license(
 	issue_date TIMESTAMP NOT NULL,
 	exp_date TIMESTAMP NOT NULL,
 	type_lic VARCHAR NOT NULL,
-	dni_driver VARCHAR(9) NOT NULL,
+	id VARCHAR(9) NOT NULL,
+
 	CONSTRAINT valid_lic_type CHECK ( type_lic IN ("A1", "A", "B", "C1", "C", "D1", 
 													"D", "BE", "C1E", "CE", "D1E", "DE") ),
 	CONSTRAINT pk_license PRIMARY KEY (id_lic),
-	CONSTRAINT fk_driver FOREIGN KEY (dni_driver) REFERENCES driver(dni)
+	CONSTRAINT fk_driver FOREIGN KEY (id) REFERENCES driver(id)
 )
 
 /*CONTROL*/
 CREATE TABLE control(
-	dni_driver VARCHAR(9),
+	id_driver VARCHAR(9),
 	arr_date TIMESTAMP,
 	dept_date TIMESTAMP NOT NULL,
 	chassis VARCHAR(17) NOT NULL,
 	codtrip VARCHAR(9) NOT NULL,
 
-	CONSTRAINT pk_control PRIMARY KEY (dni_driver, arr_date),
-	CONSTRAINT fk_driver_ctl FOREIGN KEY (dni_driver) REFERENCES driver(dni),
+	CONSTRAINT pk_control PRIMARY KEY (id_driver, arr_date),
+	CONSTRAINT fk_driver_ctl FOREIGN KEY (id_driver) REFERENCES driver(id),
 	CONSTRAINT fk_veh_ctl FOREIGN KEY (chassis) REFERENCES vehicle(chassis)
 	CONSTRAINT fk_trip_ctl FOREIGN KEY (codtrip) REFERENCES trip(cod)
 )
@@ -135,18 +139,16 @@ CREATE TABLE control(
 /*-----------------------------------------------------------------------------------------------------------------*/
 /*PARTICIPATES*/
 CREATE TABLE participate(
-	dni_driver VARCHAR(9),
+	id_driver VARCHAR(9),
 	codtrip VARCHAR(9),
 
-	CONSTRAINT pk_part PRIMARY KEY (dni_driver, codtrip),
-	CONSTRAINT fk_dni_part FOREIGN KEY (dni_driver) REFERENCES driver(dni),
+	CONSTRAINT pk_part PRIMARY KEY (id_driver, codtrip),
+	CONSTRAINT fk_id_part FOREIGN KEY (id_driver) REFERENCES driver(id),
 	CONSTRAINT fk_codtrip_part FOREIGN KEY (codtrip) REFERENCES trip(cod)
 )
 
-
 /*-----------------------------------------------------------------------------------------------------------------*/
 /*COSTS*/
-
 CREATE TABLE type_cost(
 	cod VARCHAR(9),
 	name VARCHAR(100) NOT NULL,
@@ -155,11 +157,26 @@ CREATE TABLE type_cost(
 )
 
 CREATE TABLE extra_cost(
-	cod_tcost VARCHAR(9,)
-	num INTEGER,
+	cod_tcost VARCHAR(9),
+	num NUMERIC,
 	name VARCHAR(100) NOT NULL,
 	descr VARCHAR(255),
 
 	CONSTRAINT pk_ex_cost PRIMARY KEY (cod_tcost, num),
 	CONSTRAINT fk_tcost FOREIGN KEY (cod_tcost) REFERENCES type_cost(cod)
+)
+
+/*-----------------------------------------------------------------------------------------------------------------*/
+/*Cost Attribution*/
+
+CREATE TABLE cost_attribution(
+	cod_tcost VARCHAR(9),
+	cod_trip VARCHAR(9),
+	id_driver VARCHAR(9),
+	price NUMERIC,
+
+	CONSTRAINT pk_cost_attr PRIMARY KEY (cod_tcost, cod_trip, id_driver),
+	CONSTRAINT fk_extra_cost FOREIGN KEY (cod_tcost) REFERENCES extra_cost(cod_tcost),
+	CONSTRAINT fk_trip_cost FOREIGN KEY (cod_trip) REFERENCES trip(cod),
+	CONSTRAINT fk_driver_cost FOREIGN KEY (id_driver) REFERENCES driver(id)
 )
